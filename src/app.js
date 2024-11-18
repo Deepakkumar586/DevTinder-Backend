@@ -3,9 +3,10 @@ const express = require("express");
 // we create instance of express.js application
 const app = express();
 
-// this funtion is know as  a request handler
-app.use("/test", function (req, res) {
-  res.send("Hii how r u from server...");
+// this will only handle GET call to /user
+app.get("/user/:userId/:name/:password", (req, res) => {
+  console.log("params:", req.params)
+  res.send({ firstName: "Deepak", lastName: "Kumar" });
 });
 
 app.listen(3000, () => {
