@@ -1,33 +1,31 @@
 const express = require("express");
+const connectDb = require("./config/database");
+const User = require("./models/user");
 
 const app = express();
 
-app.use("/", (err, req, res, next) => {
-  if (err) {
-    console.error("Error:", err);
-    res.status(500).send("something went wrong");
-  } else {
-    res.send("are bhaii koi error nhi hhai");
-  }
-});
-
-app.get("/getUserData", (req, res) => {
-  // logic of DB call and get user data
+app.use(express.json());
+app.post("/signup", async (req, res) => {
+  // we creating a new instance of the user model
+  const user = new User(req.body);
   try {
-    throw new Error("vgxhvgjhzsgdas");
-    res.send("User Data send");
+    await user.save();
+    res.send("User created successfully");
   } catch (err) {
-    res.status(500).send("some error contact to support service");
+    res.status(500).send("error creating user", err.message);
   }
+
+  console.log(req.body);
 });
 
-app.use("/", (err, req, res, next) => {
-  if (err) {
-    console.error("Error:", err);
-    res.status(500).send("something went wrong");
-  }
-});
-
-app.listen(8888, () => {
-  console.log("server is successfully listening on port 8888...");
-});
+// Connect to the database and run the server
+connectDb()
+  .then(() => {
+    console.log("Database connection established");
+    app.listen(8888, () => {
+      console.log("server is successfully listening on port 8888...");
+    });
+  })
+  .catch((err) => {
+    console.log("Database connection error");
+  });
