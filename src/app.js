@@ -92,7 +92,7 @@ app.delete("/deleteUser", async (req, res) => {
 });
 
 // update the api
-app.put("/update", async (req, res) => {
+app.patch("/update", async (req, res) => {
   const userId = req.body.userId;
   // console.log("userId",userId);
   const data = req.body;
@@ -100,6 +100,7 @@ app.put("/update", async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate({ _id: userId }, data, {
       returnDocument: "after",
+      runValidators:true
     });
     console.log("user", user);
 
