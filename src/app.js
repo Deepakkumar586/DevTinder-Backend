@@ -1,16 +1,34 @@
 const express = require("express");
 const connectDb = require("./config/database");
 const User = require("./models/user");
+const { validateSignUpData } = require("./utils/validations");
+const bcrypt = require("bcrypt");
 
 const app = express();
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  // Creating a new instance of the User model
-  const user = new User(req.body);
-
   try {
+    // Validations of data
+    validateSignUpData(req);
+
+    const { firstName, lastName, emailId, password, gender, age } = req.body;
+
+    // encrypt the pasword
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("hashedPassword", hashedPassword);
+
+    // Creating a new instance of the User model
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: hashedPassword,
+      gender,
+      age,
+    });
+
     await user.save();
     res.send({ message: "User created successfully", user });
   } catch (err) {
@@ -20,6 +38,40 @@ app.post("/signup", async (req, res) => {
       .send({ message: "Error creating user", error: err.message });
   }
 });
+
+
+// Login api
+app.post('/login', async (req, res)=> {
+      try{
+        const {emailId, password} = req.body;
+
+        if(!emailId){
+          return res.status(400).send({ message: "Please provide emailId" });
+        }
+        else if(!password){
+          return res.status(400).send({ message: "Please provide password" });
+        }
+        const findUser = await User.findOne({emailId: emailId})
+
+        if(!findUser){
+          return res.status(404).send({ message: "Invalid Credential" });
+        }
+
+        const isPasswordValid = await  bcrypt.compare(password, findUser.password)
+
+        if(!isPasswordValid){
+          return res.status(400).send({ message: "Invalid Credential" });
+        }
+
+        res.send({ message: "Login successful", user: findUser });
+
+
+      }
+      catch(err){
+        console.error("Error:", err.message);
+        res.status(500).send({ message: "we are not able to login  ", error: err.message });
+      }
+})
 
 // one user find from the database
 
@@ -100,14 +152,7 @@ app.patch("/update/:userId", async (req, res) => {
 
   try {
     // ALLOWED UPDATES
-    const ALLOWED_UPDATES = [
-      
-      "photoUrl",
-      "about",
-      "gender",
-      "age",
-      "skills",
-    ];
+    const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "age", "skills"];
 
     // "age":18,
     // "emailId":"deepak@gmail.com"
