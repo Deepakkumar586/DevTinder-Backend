@@ -53,22 +53,22 @@ app.post("/login", async (req, res) => {
     } else if (!password) {
       return res.status(400).send({ message: "Please provide password" });
     }
+
+    // find the user by email
     const findUser = await User.findOne({ emailId: emailId });
 
     if (!findUser) {
       return res.status(404).send({ message: "Invalid Credential" });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, findUser.password);
+    const isPasswordValid = await findUser.validatePassword(password); 
 
     if (!isPasswordValid) {
       return res.status(400).send({ message: "Invalid Credential" });
     }
 
     // create a jwt token
-    const token = await jwt.sign({ _id: findUser._id }, "nodeTinder", {
-      expiresIn: "1d",
-    });
+    const token = await findUser.getJWT();
     console.log("Token created", token);
 
     // add token to cookie and send the response back to user
