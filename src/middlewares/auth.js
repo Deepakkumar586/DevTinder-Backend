@@ -18,7 +18,10 @@ const userAuth = async (req, res, next) => {
     if (!user) {
       throw new Error("User not Found");
     }
-    req.user = user;
+
+    // logged in user
+    req.user = user
+    // console.log("auth middlewaere : " + req.user)
     next();
   } catch (err) {
     console.error("Error:", err.message);

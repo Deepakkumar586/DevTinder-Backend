@@ -70,11 +70,8 @@ const userSchema = new mongoose.Schema(
     },
     skills: {
       type: [String],
-      validate(value) {
-        if (value.length > 2) {
-          throw new Error("Skills is not a more than 5 character");
-        }
-      },
+      // required: true,
+      
     },
   },
   {
@@ -82,7 +79,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// create a token here 
+// create a token here
 userSchema.methods.getJWT = async function () {
   const user = this;
   const token = await jwt.sign({ _id: user._id }, "nodeTinder", {
@@ -92,13 +89,14 @@ userSchema.methods.getJWT = async function () {
   return token;
 };
 
-
 // validation password
 userSchema.methods.validatePassword = async function (passwordInputByUser) {
   const user = this;
   const hashedPassword = user.password;
-  const isPasswordValid = await bcrypt.compare(passwordInputByUser,hashedPassword);
+  const isPasswordValid = await bcrypt.compare(
+    passwordInputByUser,
+    hashedPassword
+  );
   return isPasswordValid;
-
-}
+};
 module.exports = mongoose.model("User", userSchema);
