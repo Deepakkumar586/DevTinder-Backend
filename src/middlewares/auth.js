@@ -20,7 +20,7 @@ const userAuth = async (req, res, next) => {
     }
 
     // logged in user
-    req.user = user
+    req.user = user;
     // console.log("auth middlewaere : " + req.user)
     next();
   } catch (err) {

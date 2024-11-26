@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       required: true,
+      index : true,
       minLength: 4,
       maxLength: 20,
     },
@@ -78,6 +79,11 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+
+
+// compound index
+userSchema.index({firstName: 1, lastName: 1})
 
 // create a token here
 userSchema.methods.getJWT = async function () {
