@@ -5,6 +5,7 @@ const User = require("../models/user");
 
 const requestConnectionRouter = express.Router();
 
+// interested and ignored routes
 requestConnectionRouter.post(
   "/request/send/:status/:toUserId",
   userAuth,
@@ -81,6 +82,57 @@ requestConnectionRouter.post(
       res
         .status(500)
         .send({ message: "connection send problem", error: err.message });
+    }
+  }
+);
+
+// accepted and rejected routes
+requestConnectionRouter.post(
+  "/request/review/:status/:requestId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const loggedInUser = req.user;
+      const { status, requestId } = req.params;
+
+      // allowed status | validate the status
+      const allowedStatus = ["accepted", "rejected"];
+      if (!allowedStatus.includes(status)) {
+        return res.status(400).json({
+          message: "Invalid status in request ",
+          error: "Invalid status",
+        });
+      }
+
+      // check connection request are presend or not
+      const connectionRequest = await ConnectionRequest.findOne({
+        _id: requestId,
+        toUserId: loggedInUser._id,
+        status: "interested",
+      });
+      if (!connectionRequest) {
+        return res.status(404).json({
+          message: "Invalid request or connection request  not found",
+          error: "Invalid request",
+        });
+      }
+
+      // change status
+      connectionRequest.status = status;
+      const data = await connectionRequest.save();
+      res
+        .status(200)
+        .json({ message: `Your request status is ${status}`, data: data });
+
+      // virat => aryan
+      // loggedinUser = touserId
+      // status => interesed
+      // requestId should be valid
+    } catch (err) {
+      console.error("Error:", err.message);
+      res
+        .status(500)
+        .send({ message: "connection review problem", error: err.message });
     }
   }
 );
