@@ -5,12 +5,13 @@ const connectionRequestSchema = new mongoose.Schema(
     // sender
     fromUserId: {
       type: mongoose.Schema.Types.ObjectId,
-      //   ref: "User",
+      // creating a link between two collections
+      ref: "User",
       required: true,
     },
     toUserId: {
       type: mongoose.Schema.Types.ObjectId,
-      //   ref: "User",
+      ref: "User",
       required: true,
     },
     status: {
