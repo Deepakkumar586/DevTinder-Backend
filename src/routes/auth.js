@@ -79,28 +79,22 @@ authRouter.post("/login", async (req, res) => {
 });
 
 // logout api
-authRouter.post("/logout", async (req,res)=>{
+authRouter.post("/logout", async (req, res) => {
   try {
-
     // first method
-    res.cookie("token",null,{
+    res.cookie("token", null, {
       expires: new Date(Date.now()),
       httpOnly: true,
-    })
+    });
     res.send({ message: "Logged out successfully" });
 
-    // second method 
+    // second method
     // res.clearCookie("token");
     // res.send({ message: "Logged out successfully" });
   } catch (err) {
     console.error("Error:", err.message);
-    res
-     .status(500)
-     .send({ message: "An error occurred", error: err.message });
+    res.status(500).send({ message: "An error occurred", error: err.message });
   }
-
-})
-
-
+});
 
 module.exports = authRouter;

@@ -15,10 +15,14 @@
 # ConnectionRequestRouter
 
 <!-- ignored and interested -->
+
 - Post /request/send/:status/:userId
 
 <!-- Accepted and Rejected -->
+
 - Post /request/review/:status/:requestId
+
+# userRouter
 
 - Get /user/connection
 - get /user/request/received
