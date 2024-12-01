@@ -46,7 +46,7 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
       })
       .populate({
         path: "fromUserId",
-        select: "firstName lastName photoUrl about skills",
+        select: "firstName lastName photoUrl about skills age gender",
       })
       .populate({
         path: "toUserId",

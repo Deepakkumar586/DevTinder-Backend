@@ -18,7 +18,7 @@ const validateSignUpData = (req, res) => {
 
 const validateProfileEditData = (req, res) => {
   // validate prfile update
-  const allowedEditFields = ["photoUrl", "age", "about", "skills"];
+  const allowedEditFields = ["photoUrl", "about", "age", "skills", "gender"];
 
   const { photoUrl, skills } = req.body;
 
@@ -80,7 +80,9 @@ const validatePassword = async (req, res) => {
     }
 
     // If all validations pass, return success
-    return res.status(200).json({ message: "Password validated successfully." });
+    return res
+      .status(200)
+      .json({ message: "Password validated successfully." });
   } catch (error) {
     console.error("Error during password validation:", error);
     return res.status(500).json({ message: "Internal Server Error." });
