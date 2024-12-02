@@ -6,6 +6,10 @@ const {
 } = require("../utils/validations");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
+const User = require("../models/user");
+const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
+// const user = require("../models/user");
 
 const profileRouter = express.Router();
 
@@ -47,64 +51,216 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   }
 });
 
-// profile update reset password
+// /profile delete
 
-profileRouter.patch(
-  "/profile/resetPassword",
-  userAuth,
-  userAuth,
-  async (req, res) => {
-    try {
-      const { oldPassword, newPassword, confirmPassword } = req.body;
+profileRouter.delete("/profile/delete", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user._id;
+    // remove user from database
+    console.log("id" + loggedInUser);
 
-      // Ensure all fields are provided
-      if (!oldPassword || !newPassword || !confirmPassword) {
-        return res.status(400).json({ message: "All fields are required." });
-      }
+    await User.findByIdAndDelete(loggedInUser);
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (err) {
+    console.error("Error:", err.message);
+    res
+      .status(500)
+      .send({ message: "Profile delete Error", error: err.message });
+  }
+});
 
-      // Get the logged-in user's password hash
-      const loggedInUser = req.user;
-      if (!loggedInUser || !loggedInUser.password) {
-        return res.status(401).json({ message: "User is not authenticated." });
-      }
+// profile forgot password via mail
+profileRouter.post("/profile/forgotPassword", async (req, res) => {
+  try {
+    const { emailId } = req.body;
 
-      const hashedPassword = loggedInUser.password;
+    // Find user with the provided email
+    const findUser = await User.findOne({ emailId });
 
-      // Compare the old password with the stored hashed password
-      const isComparePassword = await bcrypt.compare(
-        oldPassword,
-        hashedPassword
-      );
-      if (!isComparePassword) {
-        return res
-          .status(400)
-          .json({ message: "Old password does not match." });
-      }
+    if (!findUser) {
+      return res
+        .status(404)
+        .json({ message: "Email not found.", success: false });
+    }
 
-      // Validate the strength of the new password
-      if (!validator.isStrongPassword(newPassword)) {
-        return res.status(400).json({
-          message:
-            "New password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+    // Check if the user recently requested a reset email
+    const currentTime = new Date();
+    const resetRequestCooldown = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+    if (findUser.lastPasswordResetRequest) {
+      const timeSinceLastRequest =
+        currentTime - new Date(findUser.lastPasswordResetRequest);
+      if (timeSinceLastRequest < resetRequestCooldown) {
+        const timeRemaining = Math.ceil(
+          (resetRequestCooldown - timeSinceLastRequest) / 60000
+        );
+        return res.status(429).json({
+          message: `You can request another reset email in ${timeRemaining} minutes.`,
+          success: false,
         });
       }
-
-      // Ensure the new password matches the confirmation password
-      if (newPassword !== confirmPassword) {
-        return res.status(400).json({ message: "Passwords do not match." });
-      }
-
-      // save the new password to db
-      loggedInUser.password = await bcrypt.hash(newPassword, 10);
-      await loggedInUser.save();
-
-      // If all validations pass, return success
-      return res.status(200).json({ message: "Password Reset successfully." });
-    } catch (error) {
-      console.error("Error during password validation:", error);
-      return res.status(500).json({ message: "Internal Server Error." });
     }
+
+    // Generate the token for password reset (expires in 10 minutes)
+    const resetToken = jwt.sign({ id: findUser._id }, "nodeTinder", {
+      expiresIn: "10m",
+    });
+
+    // Define frontend URL (can be overridden by environment variable)
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+    // URL encoding for the reset password link
+    const resetPasswordLink = encodeURI(
+      `${frontendUrl}/reset-password/${findUser._id}/${resetToken}`
+    );
+
+    // Setup Nodemailer transport
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      secure: true,
+      port: 465,
+      auth: {
+        user: "deeparyan345@gmail.com", // Replace with your Gmail email
+        pass: "fqfa ngib qisj wryg", // Replace with your Gmail App Password
+      },
+    });
+
+    // Mail options to send email
+    const mailOptions = {
+      from: "deeparyan345@gmail.com", // Replace with your Gmail email
+      to: emailId, // User's email address
+      subject: "Password Reset Token (valid for only 10 minutes)",
+      html: `
+        <p>You can reset your password by clicking the button below:</p>
+        <a href="${resetPasswordLink}" style="
+            display: inline-block;
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+        ">Reset Password</a>
+        <p>If you can't click the button, please copy and paste the following URL into your browser:</p>
+        <p><a href="${resetPasswordLink}">${resetPasswordLink}</a></p>
+        <p>If you remember your password, please ignore this email.</p>
+      `,
+    };
+
+    // Send the email
+    transporter.sendMail(mailOptions, async (error, info) => {
+      if (error) {
+        console.log("Error sending email: " + error);
+        return res
+          .status(500)
+          .json({ message: "Failed to send password reset email." });
+      } else {
+        console.log("Email sent: " + info.response);
+
+        // Update the user's last password reset request time
+        findUser.lastPasswordResetRequest = currentTime;
+        await findUser.save();
+
+        return res.status(200).json({
+          message: "Password reset email sent successfully.",
+        });
+      }
+    });
+  } catch (error) {
+    console.error("Error during password reset:", error);
+    return res.status(500).json({ message: "Internal Server Error." });
   }
-);
+});
+
+// profile update reset password
+profileRouter.post("/profile/resetPassword/:id/:token", async (req, res) => {
+  try {
+    const { id, token } = req.params;
+    const { password, confirmPassword } = req.body;
+
+    // validate password
+    if (!password || !confirmPassword) {
+      return res
+        .status(400)
+        .json({ message: "Password and Confirm Password are required." });
+    }
+
+    // match password and confirm password
+    if (password !== confirmPassword) {
+      return res
+        .status(400)
+        .json({ message: "Password and Confirm Password do not match." });
+    }
+
+    // Validate the strength of the new password
+    if (!validator.isStrongPassword(password)) {
+      return res.status(400).json({
+        message:
+          "New password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+      });
+    }
+
+    // Find user with the provided id
+    const findUser = await User.findById(id);
+
+    if (!findUser) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Verify the token
+    const payload = jwt.verify(token, "nodeTinder");
+
+    if (!payload) {
+      return res.status(401).json({ message: "Invalid token." });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update the user's password
+    findUser.password = hashedPassword;
+
+    // Save the updated user
+    const updatedUser = await findUser.save();
+
+    // Return a success message
+    res.status(200).json({ message: "Password updated successfully." });
+
+    // Send a success email to the user
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      secure: true,
+      port: 465,
+      auth: {
+        user: "deeparyan345@gmail.com", // Replace with your Gmail email
+        pass: "fqfa ngib qisj wryg", // Replace with your Gmail App Password
+      },
+    });
+
+    const mailOptions = {
+      from: "deeparyan345@gmail.com", // Replace with your Gmail email
+      to: findUser.emailId, // User's email address
+      subject: "Password Update Successful",
+      html: `
+        <p>Your password has been updated successfully.</p>
+      `,
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log("Error sending email: " + error);
+        return res
+          .status(500)
+          .json({ message: "Failed to send password update email." });
+      } else {
+        console.log("Email sent: " + info.response);
+      }
+    });
+  } catch (error) {
+    console.error("Error during password reset:", error);
+    return res.status(500).json({ message: "Error! From Password Reset " });
+  }
+});
 
 module.exports = profileRouter;

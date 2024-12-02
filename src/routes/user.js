@@ -37,6 +37,7 @@ userRouter.get("/user/request/received", userAuth, async (req, res) => {
 userRouter.get("/user/connections", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
+
     const connections = await connectionRequest
       .find({
         $or: [
@@ -53,14 +54,16 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
         select: "firstName lastName photoUrl about skills",
       });
 
-    const data = connections.map((row) => {
-      // if(row.fromUserId.firstName === loggedInUser.firstName){
-      if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
-        return row.toUserId;
-      } else {
-        return row.fromUserId;
-      }
-    });
+    // Filter and map valid connections
+    const data = connections
+      .map((row) => {
+        if (row.fromUserId?._id?.toString() === loggedInUser._id.toString()) {
+          return row.toUserId; // If "fromUserId" matches, return "toUserId"
+        } else {
+          return row.fromUserId; // Otherwise, return "fromUserId"
+        }
+      })
+      .filter((user) => user !== null); // Exclude deleted or invalid users
 
     res.json({
       message: `${loggedInUser.firstName} connections fetched successfully`,
@@ -74,6 +77,7 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
     });
   }
 });
+
 
 // feed api
 userRouter.get("/user/feed", userAuth, async (req, res) => {

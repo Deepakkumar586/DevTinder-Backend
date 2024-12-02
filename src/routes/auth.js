@@ -10,7 +10,7 @@ authRouter.post("/signup", async (req, res) => {
     // Validations of data
     validateSignUpData(req);
 
-    const { firstName, lastName, emailId, password, gender, age } = req.body;
+    const { firstName, lastName, emailId, password } = req.body;
 
     // encrypt the password to attacker
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -22,12 +22,19 @@ authRouter.post("/signup", async (req, res) => {
       lastName,
       emailId,
       password: hashedPassword,
-      gender,
-      age,
     });
 
-    await user.save();
-    res.send({ message: "User created successfully", user });
+    const savedUser = await user.save();
+
+    const token = await savedUser.getJWT();
+    console.log("Token created", token);
+
+    // add token to cookie and send the response back to user
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 8 * 3600000),
+      httpOnly: true,
+    });
+    res.json({ message: "User created successfully", data: savedUser });
   } catch (err) {
     // console.error("Error creating user:", err.message);
     res
@@ -69,7 +76,7 @@ authRouter.post("/login", async (req, res) => {
       expires: new Date(Date.now() + 8 * 3600000),
       httpOnly: true,
     });
-    res.send({ message: "Login successful",findUser });
+    res.send({ message: "Login successful", findUser });
   } catch (err) {
     console.error("Error:", err.message);
     res

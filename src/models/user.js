@@ -43,12 +43,12 @@ const userSchema = new mongoose.Schema(
     },
     age: {
       type: Number,
-      required: true,
+      // required: true,
       min: 18,
     },
     gender: {
       type: String,
-      required: true,
+      // required: true,
       validate(value) {
         if (!/^(Male|Female|Other)$/i.test(value)) {
           throw new Error("Invalid gender! Must be Male, Female or Other.");
@@ -73,12 +73,15 @@ const userSchema = new mongoose.Schema(
       type: [String],
       // required: true,
     },
+    lastPasswordResetRequest: { 
+      type: Date, 
+      default: null 
+    },
   },
   {
     timestamps: true,
   }
 );
-
 
 // compound index
 userSchema.index({ firstName: 1, lastName: 1 });
