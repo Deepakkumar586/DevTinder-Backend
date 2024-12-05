@@ -107,7 +107,7 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
       hideUserFromFeed.add(connection.fromUserId._id);
       hideUserFromFeed.add(connection.toUserId._id);
     });
-    console.log(hideUserFromFeed);
+    // console.log(hideUserFromFeed);
 
     const users = await User.find({
       $and: [
@@ -119,7 +119,7 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    console.log(users);
+    // console.log(users);
 
     res.json({
       message: "Feed fetched successfully",
