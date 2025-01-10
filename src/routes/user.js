@@ -78,7 +78,6 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
   }
 });
 
-
 // feed api
 userRouter.get("/user/feed", userAuth, async (req, res) => {
   try {
