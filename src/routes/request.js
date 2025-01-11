@@ -4,6 +4,7 @@ const ConnectionRequest = require("../models/connectionRequest");
 const User = require("../models/user");
 
 const requestConnectionRouter = express.Router();
+const sendEmail = require("../utils/sendEmail");
 
 // interested and ignored routes
 requestConnectionRouter.post(
@@ -15,7 +16,7 @@ requestConnectionRouter.post(
       const toUserId = req.params.toUserId;
       const status = req.params.status;
 
-      // allowed status
+      // Allowed statuses
       const allowedStatuses = ["interested", "ignored"];
       if (!allowedStatuses.includes(status)) {
         return res
@@ -23,65 +24,57 @@ requestConnectionRouter.post(
           .json({ message: "Invalid status", error: "Invalid status" });
       }
 
-      // if already exist connection request
+      // Check if connection request already exists
       const existingConnectionRequest = await ConnectionRequest.findOne({
         fromUserId: fromUserId,
         toUserId: toUserId,
       });
       if (existingConnectionRequest) {
         return res.status(409).send({
-          message: "Connection request already exist",
-          error: "Connection request already exist",
+          message: "Connection request already exists",
+          error: "Connection request already exists",
         });
       }
 
-      //  // check same user
-      //  if (fromUserId.toString() === toUserId.toString()) {
-      //   return res
-      //     .status(400)
-      //     .send({
-      //       message: "You can't send connection to yourself",
-      //       error: "Invalid request",
-      //     });
-      // }
-
-      // check if user exists
+      // Check if the target user exists
       const toUser = await User.findById(toUserId);
       if (!toUser) {
         return res.status(404).send({
-          message: "User not found in db | you are not able to send connection",
+          message: "User not found in db. Cannot send connection request.",
           error: "User not found",
         });
       }
 
-      // make a new instance
+      // Create and save the connection request
       const connectionRequest = new ConnectionRequest({
         fromUserId,
         toUserId,
         status,
       });
-
-      // save the connection request in the database
       const connectionRequestData = await connectionRequest.save();
 
+      // Prepare email subject and body
+      const subject = `Connection Request: ${status} in`;
+      const body = `Hello ${req.user.firstName},\n\nYou have sent a connection request to ${toUser.firstName}.`;
+
+      // Send email to the target user
+      await sendEmail(
+        process.env.AWS_EMAIL_ADDRESS,
+        toUser.firstName,
+        subject,
+        body
+      ); // sendEmail function is called here
+
+      // Respond with success
       res.status(200).json({
-        message:
-          req.user.firstName +
-          " " +
-          "is" +
-          " " +
-          status +
-          " " +
-          "is" +
-          " " +
-          toUser.firstName,
-        connectionRequestData: connectionRequestData, // added this line to return the saved data in response
+        message: `${req.user.firstName} is ${status} to ${toUser.firstName}`,
+        connectionRequestData,
       });
     } catch (err) {
       console.error("Error:", err.message);
       res
         .status(500)
-        .send({ message: "connection send problem", error: err.message });
+        .send({ message: "Connection send problem", error: err.message });
     }
   }
 );
