@@ -65,10 +65,10 @@ requestConnectionRouter.post(
       //   body
       // ); // sendEmail function is called here
 
-      // const emailRes = await sendEmail.run(
-      //   "You have sent a request to " + toUser.firstName, // Subject
-      //   `Hello ${req.user.firstName},\n\nYou have sent a connection request to ${toUser.firstName}.\n\n${toUser.firstName} has marked you as ${status} in their connection request.` // Body
-      // );
+      const emailRes = await sendEmail.run(
+        "You have sent a request to " + toUser.firstName, // Subject
+        `Hello ${req.user.firstName},\n\nYou have sent a connection request to ${toUser.firstName}.\n\n${toUser.firstName} has marked you as ${status} in their connection request.` // Body
+      );
 
       // Respond with success
       res.status(200).json({
