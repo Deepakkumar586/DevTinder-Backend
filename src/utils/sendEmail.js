@@ -1,39 +1,56 @@
 const AWS = require("aws-sdk");
+const { SendEmailCommand} = require("@aws-sdk/client-ses");
+const { sesClient } = require("./sesClient.js");
 require("dotenv").config();
 
 // SES Configuration
-const SES_Config = {
-  accessKeyId: process.env.AWS_ACCESS_KEY,
-  secretAccessKey: process.env.AWS_SECRET_KEY,
-  region: "ap-south-1",
+const createSendEmailCommand = (toAddress, fromAddress, subject, body) => {
+  return new SendEmailCommand({
+    Destination: {
+      CcAddresses: [],
+      ToAddresses: [toAddress],
+    },
+    Message: {
+      Body: {
+        Html: {
+          Charset: "UTF-8",
+          Data: `<h1>${body}</h1>`,
+        },
+        Text: {
+          Charset: "UTF-8",
+          Data: "This is the text format email",
+        },
+      },
+      Subject: {
+        Charset: "UTF-8",
+        Data: subject,
+      },
+    },
+    Source: fromAddress,
+    ReplyToAddresses: [
+      /* more items */
+    ],
+  });
 };
 
-const AWS_SES = new AWS.SES(SES_Config);
+const run = async (subject, body, toEmailId) => {
+  const sendEmailCommand = createSendEmailCommand(
+    process.env.AWS_EMAIL_ADDRESS,
+    process.env.AWS_EMAIL_ADDRESS,
+    subject,
+    body
+  );
 
-// Send Email Function
-const sendEmail = async (recipientEmail, name, subject, body) => {
-    const params = {
-      Source: process.env.AWS_EMAIL_ADDRESS, // Make sure this email is verified in AWS SES
-      Destination: { ToAddresses: [recipientEmail] },
-      Message: {
-        Body: {
-          Html: { Data: `<h1>${body}</h1>` }, // Dynamically setting the body
-          Text: { Data: body }, // Text format body
-        },
-        Subject: { Data: `${subject}, ${name}` }, // Including name in the subject
-      },
-    };
-  
-    try {
-      const result = await AWS_SES.sendEmail(params).promise();
-      return result; // Return the result if needed in the route handler
-    } catch (error) {
-      console.error("Failed to send email:", error);
-      throw error;
+  try {
+    return await sesClient.send(sendEmailCommand);
+  } catch (caught) {
+    if (caught instanceof Error && caught.name === "MessageRejected") {
+      const messageRejectedError = caught;
+      return messageRejectedError;
     }
-  };
-  
-  
+    throw caught;
+  }
+};
 
-// Export the sendEmail function
-module.exports = sendEmail;
+// snippet-end:[ses.JavaScript.email.sendEmailV3]
+module.exports = { run };

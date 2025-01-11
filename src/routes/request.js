@@ -54,16 +54,21 @@ requestConnectionRouter.post(
       const connectionRequestData = await connectionRequest.save();
 
       // Prepare email subject and body
-      const subject = `Connection Request: ${status} in`;
-      const body = `Hello ${req.user.firstName},\n\nYou have sent a connection request to ${toUser.firstName}.`;
+      // const subject = `Connection Request: ${status} in`;
+      // const body = `Hello ${req.user.firstName},\n\nYou have sent a connection request to ${toUser.firstName}.`;
 
-      // Send email to the target user
-      await sendEmail(
-        process.env.AWS_EMAIL_ADDRESS,
-        toUser.firstName,
-        subject,
-        body
-      ); // sendEmail function is called here
+      // // Send email to the target user
+      // await sendEmail(
+      //   process.env.AWS_EMAIL_ADDRESS,
+      //   toUser.firstName,
+      //   subject,
+      //   body
+      // ); // sendEmail function is called here
+
+      const emailRes = await sendEmail.run(
+        "You have sent a request to " + toUser.firstName, // Subject
+        `Hello ${req.user.firstName},\n\nYou have sent a connection request to ${toUser.firstName}.\n\n${toUser.firstName} has marked you as ${status} in their connection request.` // Body
+      );
 
       // Respond with success
       res.status(200).json({
