@@ -33,11 +33,14 @@ app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
 
+
+const PORT  = process.env.PORT
+
 // Connect to the database and run the server
 connectDb()
   .then(() => {
     console.log("Database connection established");
-    app.listen(8888, () => {
+    app.listen(PORT, () => {
       console.log("server is successfully listening on port 8888...");
     });
   })

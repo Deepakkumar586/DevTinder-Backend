@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+require("dotenv").config();
 
 const userAuth = async (req, res, next) => {
   // read the token from the req cookies
@@ -11,7 +12,7 @@ const userAuth = async (req, res, next) => {
     if (!token) {
       return res.status(401).send("Please Login!");
     }
-    const decodedData = await jwt.verify(token, "nodeTinder");
+    const decodedData = await jwt.verify(token, process.env.JWT_SECRET_KEY);
     const { _id } = decodedData;
     // find the user
     const user = await User.findById(_id);
