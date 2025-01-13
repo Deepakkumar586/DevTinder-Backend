@@ -2,6 +2,7 @@ const express = require("express");
 const connectDb = require("./config/database");
 const cors = require("cors");
 const dotenv = require("dotenv");
+require("./utils/cronJob");
 
 dotenv.config();
 

@@ -67,7 +67,11 @@ requestConnectionRouter.post(
 
       const emailRes = await sendEmail.run(
         "You have sent a request to " + toUser.firstName, // Subject
-        `Hello ${req.user.firstName},\n\nYou have sent a connection request to ${toUser.firstName}.\n\n${toUser.firstName} has marked you as ${status} in their connection request.` // Body
+        `Hello ${req.user.firstName},\n\nYou have sent a connection request to ${toUser.firstName}.\n\n${toUser.firstName} has marked you as ${status} in their connection request.`, // Body
+        // and mail id
+        // process.env.AWS_EMAIL_ADDRESS,
+        // toUserId.emailId // email is not verified reciept  email
+
       );
 
       // Respond with success
