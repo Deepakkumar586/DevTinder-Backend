@@ -56,6 +56,13 @@ const userSchema = new mongoose.Schema(
         }
       },
     },
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
+    membershipType: {
+      type: String,
+    },
     photoUrl: {
       type: String,
       validate(value) {
@@ -74,9 +81,9 @@ const userSchema = new mongoose.Schema(
       type: [String],
       // required: true,
     },
-    lastPasswordResetRequest: { 
-      type: Date, 
-      default: null 
+    lastPasswordResetRequest: {
+      type: Date,
+      default: null,
     },
   },
   {

@@ -2,6 +2,7 @@ const express = require("express");
 const connectDb = require("./config/database");
 const cors = require("cors");
 const dotenv = require("dotenv");
+
 require("./utils/cronJob");
 
 dotenv.config();
@@ -26,16 +27,15 @@ const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
+const paymentRouter = require("./routes/payments");
 
 app.use("/", authRouter);
-
 app.use("/", profileRouter);
-
 app.use("/", requestRouter);
 app.use("/", userRouter);
+app.use("/", paymentRouter);
 
-
-const PORT  = process.env.PORT
+const PORT = process.env.PORT;
 
 // Connect to the database and run the server
 connectDb()

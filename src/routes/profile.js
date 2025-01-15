@@ -120,14 +120,14 @@ profileRouter.post("/profile/forgotPassword", async (req, res) => {
       secure: true,
       port: 465,
       auth: {
-        user: "deeparyan345@gmail.com", // Replace with your Gmail email
-        pass: "fqfa ngib qisj wryg", // Replace with your Gmail App Password
+        user: process.env.EMAIL_ADDRESS, // Replace with your Gmail email
+        pass: process.env.EMAIL_PASSWORD, // Replace with your Gmail App Password
       },
     });
 
     // Mail options to send email
     const mailOptions = {
-      from: "deeparyan345@gmail.com", // Replace with your Gmail email
+      from: process.env.EMAIL_ADDRESS, // Replace with your Gmail email
       to: emailId, // User's email address
       subject: "Password Reset Token (valid for only 10 minutes)",
       html: `
@@ -233,13 +233,13 @@ profileRouter.post("/profile/resetPassword/:id/:token", async (req, res) => {
       secure: true,
       port: 465,
       auth: {
-        user: "deeparyan345@gmail.com", // Replace with your Gmail email
-        pass: "fqfa ngib qisj wryg", // Replace with your Gmail App Password
+        user: process.env.EMAIL_ADDRESS, // Replace with your Gmail email
+        pass: process.env.EMAIL_PASSWORD, // Replace with your Gmail App Password
       },
     });
 
     const mailOptions = {
-      from: "deeparyan345@gmail.com", // Replace with your Gmail email
+      from: process.env.EMAIL_ADDRESS, // Replace with your Gmail email
       to: findUser.emailId, // User's email address
       subject: "Password Update Successful",
       html: `
