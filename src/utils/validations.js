@@ -31,7 +31,9 @@ const validateProfileEditData = (req, res) => {
     throw new Error("Skills should be an array");
   }
   if (skills.length !== 5) {
-    throw new Error("Skills must have at least 5 elements");
+    return res.status(400).json({
+      message: "Skills must have at least 5 elements",
+    });
   }
 
   const isEditAllowed = Object.keys(req.body).every((field) =>
