@@ -107,7 +107,7 @@ profileRouter.post("/profile/forgotPassword", async (req, res) => {
     });
 
     // Define frontend URL (can be overridden by environment variable)
-    const frontendUrl = "http://51.20.82.159/api";
+    const frontendUrl = "http://51.20.82.159";
 
     // URL encoding for the reset password link
     const resetPasswordLink = encodeURI(
