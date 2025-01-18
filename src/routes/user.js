@@ -78,6 +78,60 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
   }
 });
 
+
+
+// feed api
+userRouter.get("/user/feed", userAuth, async (req, res) => {
+  try {
+    //  user should see all the users card except :
+    // his own card
+    // his connections card
+    // ignored people
+    // already sent the connection request
+
+    const loggedInUser = req.user;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 50 ? 50 : limit;
+    const skip = (page - 1) * limit;
+
+    // find all connection request which we sent or recieve
+    const sentAndReceivedConnections = await connectionRequest
+      .find({
+        $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+      })
+      .select("fromUserId toUserId");
+
+    const hideUserFromFeed = new Set();
+
+    sentAndReceivedConnections.forEach((connection) => {
+      hideUserFromFeed.add(connection.fromUserId._id);
+      hideUserFromFeed.add(connection.toUserId._id);
+    });
+    // console.log(hideUserFromFeed);
+
+    const users = await User.find({
+      $and: [
+        { _id: { $nin: Array.from(hideUserFromFeed) } },
+        { _id: { $ne: loggedInUser._id } },
+      ],
+    })
+      .select("firstName lastName photoUrl about skills")
+      .skip(skip)
+      .limit(limit);
+
+    // console.log(users);
+
+    res.json({
+      message: "Feed fetched successfully",
+      data: users,
+    });
+  } catch (err) {
+    console.error("Error:", err.message);
+    res.status(500).send({ message: "Feed Api Error", error: err.message });
+  }
+});
+
 // find user according to user id
 
 userRouter.get("/user/:targetUserId", userAuth, async (req, res) => {
@@ -140,56 +194,6 @@ userRouter.get("/user/connections/:id", userAuth, async (req, res) => {
   }
 });
 
-// feed api
-userRouter.get("/user/feed", userAuth, async (req, res) => {
-  try {
-    //  user should see all the users card except :
-    // his own card
-    // his connections card
-    // ignored people
-    // already sent the connection request
 
-    const loggedInUser = req.user;
-    const page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
-    limit = limit > 50 ? 50 : limit;
-    const skip = (page - 1) * limit;
-
-    // find all connection request which we sent or recieve
-    const sentAndReceivedConnections = await connectionRequest
-      .find({
-        $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
-      })
-      .select("fromUserId toUserId");
-
-    const hideUserFromFeed = new Set();
-
-    sentAndReceivedConnections.forEach((connection) => {
-      hideUserFromFeed.add(connection.fromUserId._id);
-      hideUserFromFeed.add(connection.toUserId._id);
-    });
-    // console.log(hideUserFromFeed);
-
-    const users = await User.find({
-      $and: [
-        { _id: { $nin: Array.from(hideUserFromFeed) } },
-        { _id: { $ne: loggedInUser._id } },
-      ],
-    })
-      .select("firstName lastName photoUrl about skills")
-      .skip(skip)
-      .limit(limit);
-
-    // console.log(users);
-
-    res.json({
-      message: "Feed fetched successfully",
-      data: users,
-    });
-  } catch (err) {
-    console.error("Error:", err.message);
-    res.status(500).send({ message: "Feed Api Error", error: err.message });
-  }
-});
 
 module.exports = userRouter;
