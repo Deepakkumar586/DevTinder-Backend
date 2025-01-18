@@ -2,6 +2,7 @@ const express = require("express");
 const connectDb = require("./config/database");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const http = require("http");
 
 require("./utils/cronJob");
 
@@ -28,12 +29,19 @@ const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
 const paymentRouter = require("./routes/payments");
+const initializeSocket = require("./utils/socket");
+const chatRouter = require("./routes/chat");
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
 app.use("/", paymentRouter);
+app.use("/",chatRouter)
+
+// server
+const server = http.createServer(app);
+initializeSocket(server);
 
 const PORT = process.env.PORT;
 
@@ -41,10 +49,10 @@ const PORT = process.env.PORT;
 connectDb()
   .then(() => {
     console.log("Database connection established");
-    app.listen(PORT, () => {
-      console.log("server is successfully listening on port 8888...");
+    server.listen(PORT, () => {
+      console.log(`server is successfully listening on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.log("Database connection error");
+    console.error("Database connection error");
   });

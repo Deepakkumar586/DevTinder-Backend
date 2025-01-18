@@ -47,11 +47,11 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
       })
       .populate({
         path: "fromUserId",
-        select: "firstName lastName photoUrl about skills age gender",
+        select: "firstName lastName photoUrl about skills age gender isPremium",
       })
       .populate({
         path: "toUserId",
-        select: "firstName lastName photoUrl about skills",
+        select: "firstName lastName photoUrl about skills isPremium",
       });
 
     // Filter and map valid connections
@@ -75,6 +75,68 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
       message: "Error in fetching connections",
       error: err.message,
     });
+  }
+});
+
+// find user according to user id
+
+userRouter.get("/user/:targetUserId", userAuth, async (req, res) => {
+  try {
+    const userId = req.params.targetUserId;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    res.json({
+      message: "User fetched successfully",
+      data: user,
+    });
+  } catch (err) {
+    console.error("Error:", err.message);
+    res
+      .status(500)
+      .send({ message: "Error in fetching user", error: err.message });
+  }
+});
+
+// user can check connection with parameter /:id
+
+userRouter.get("/user/connections/:id", userAuth, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const loggedInUser = req.user;
+
+    const connection = await connectionRequest
+      .findOne({
+        $or: [
+          { fromUserId: loggedInUser._id, toUserId: userId },
+          { fromUserId: userId, toUserId: loggedInUser._id },
+        ],
+      })
+      .populate({
+        path: "fromUserId",
+        select: "firstName lastName photoUrl about skills age gender",
+      })
+      .populate({
+        path: "toUserId",
+        select: "firstName lastName photoUrl about skills",
+      });
+
+    if (!connection) {
+      return res.status(404).send({ message: "Connection not found" });
+    }
+
+    res.json({
+      message: `${loggedInUser.firstName}'s connection with ${connection.toUserId.firstName} fetched successfully`,
+      data: connection,
+    });
+  } catch (err) {
+    console.error("Error:", err.message);
+    res
+      .status(500)
+      .send({ message: "Error in fetching connection", error: err.message });
   }
 });
 
