@@ -1,6 +1,7 @@
 const socket = require("socket.io");
 const crypto = require("crypto");
 const Chat = require("../models/chat");
+const GroupChat = require("../models/GroupChat");
 const ConnectionRequest = require("../models/connectionRequest");
 
 const getSecretRoomId = (userId, targetUserId) => {
@@ -24,6 +25,41 @@ const initializeSocket = (server) => {
       socket.join(roomId);
     });
 
+    socket.on("joinGroupChat", ({ groupId, userId, firstName, lastName }) => {
+      socket.join(groupId);
+      console.log(`${firstName} ${lastName} joined Group: ${groupId}`);
+    });
+    // for group chat
+    // Handle Sending Messages
+    socket.on(
+      "groupmessage",
+      async ({ groupId, senderId, text, attachments = [] }) => {
+        const messageData = {
+          groupId,
+          senderId,
+          text,
+          attachments,
+          createdAt: new Date(),
+        };
+
+        // Save to DB
+        try {
+          const group = await GroupChat.findById(groupId);
+          if (!group) {
+            return socket.emit("error", { message: "Group not found" });
+          }
+
+          group.messages.push(messageData);
+          await group.save();
+
+          io.to(groupId).emit("groupMessageReceived", messageData);
+        } catch (err) {
+          console.error("Error sending message:", err);
+          socket.emit("error", { message: "Failed to send message" });
+        }
+      }
+    );
+
 
     // Typing event
     socket.on("typing", ({ userId, targetUserId, isTyping }) => {
@@ -37,14 +73,7 @@ const initializeSocket = (server) => {
 
     socket.on(
       "sendMessage",
-      async ({
-        firstName,
-        lastName,
-        userId,
-        targetUserId,
-        text,
-       
-      }) => {
+      async ({ firstName, lastName, userId, targetUserId, text }) => {
         try {
           const roomId = getSecretRoomId(userId, targetUserId);
           console.log(firstName + " " + text);
@@ -87,7 +116,7 @@ const initializeSocket = (server) => {
           chat.messages.push({
             senderId: userId, // Ensure senderId is set
             targetUserId,
-            
+
             text,
             createdAt: new Date().toISOString(), // Add createdAt field
           });
