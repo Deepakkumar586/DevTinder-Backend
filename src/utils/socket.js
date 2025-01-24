@@ -61,6 +61,21 @@ const initializeSocket = (server) => {
     );
 
 
+    // Listen for the "typing" event
+  socket.on("grouptyping", ({ groupId, userId, isTyping, userName }) => {
+    // Broadcast the typing event to other users in the group
+    socket.to(groupId).emit("userTyping", {
+      groupId,
+      userId,
+      isTyping,
+      userName,
+    });
+  });
+
+
+
+
+
     // Typing event
     socket.on("typing", ({ userId, targetUserId, isTyping }) => {
       const roomId = getSecretRoomId(userId, targetUserId);

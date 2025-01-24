@@ -127,13 +127,12 @@ Grouprouter.get("/check/group-by-Id/:groupId", userAuth, async (req, res) => {
   }
 });
 
-// Send a message in a group
-
-
 // Fetch all messages from a group
 Grouprouter.get("/group-messages/:groupId", async (req, res) => {
   try {
-    const groupChat = await GroupChat.findById(req.params.groupId).populate("messages.senderId");
+    const groupChat = await GroupChat.findById(req.params.groupId).populate(
+      "messages.senderId"
+    );
     if (!groupChat) {
       return res.status(404).json({ message: "Group not found" });
     }
@@ -145,8 +144,8 @@ Grouprouter.get("/group-messages/:groupId", async (req, res) => {
 
 // Add a member to the group
 Grouprouter.post("/add/Member/InGroup/:userId", userAuth, async (req, res) => {
-  const { groupName } = req.body;  // Get group name from the body
-  const userId = req.params.userId;  // Get userId from the route params
+  const { groupName } = req.body; // Get group name from the body
+  const userId = req.params.userId; // Get userId from the route params
   const loggedInUser = req.user._id;
 
   try {
@@ -190,7 +189,6 @@ Grouprouter.post("/add/Member/InGroup/:userId", userAuth, async (req, res) => {
       .json({ error: "Failed to add member", details: err.message });
   }
 });
-
 
 // Remove a member from the group
 Grouprouter.delete(
