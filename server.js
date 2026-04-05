@@ -14,7 +14,7 @@ const cors = require('cors')
 
 app.use(cors(
     {
-        origin: "https://dev-tinder-frontend-4tpv3589e-deepakkumar586s-projects.vercel.app/",
+        origin: "https://dev-tinder-frontend-4tpv3589e-deepakkumar586s-projects.vercel.app",
         credentials: true
     }
 ))
