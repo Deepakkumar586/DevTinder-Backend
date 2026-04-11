@@ -226,8 +226,12 @@ exports.Login = async (req, res) => {
 
     const token = user.getJWT();
 
-    res.cookie('token', token)
-    
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+       sameSite: "none" 
+    })
+
 
     res.status(200).json({
       message: "Login successful",
