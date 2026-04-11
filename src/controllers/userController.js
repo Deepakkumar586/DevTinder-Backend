@@ -79,9 +79,13 @@ exports.userFeed = async (req, res) => {
 
         const hideUserFromFeed = new Set();
         existconnectionRequest.forEach((connection) => {
-            hideUserFromFeed.add(connection.fromUserId._id.toString());
-            hideUserFromFeed.add(connection.toUserId._id.toString());
-        })
+            if (connection.fromUserId?._id) {
+                hideUserFromFeed.add(connection.fromUserId._id.toString());
+            }
+            if (connection.toUserId?._id) {
+                hideUserFromFeed.add(connection.toUserId._id.toString());
+            }
+        });
 
         const users = await User.find({
             _id: { $nin: Array.from(hideUserFromFeed), $ne: loggedInUser }
