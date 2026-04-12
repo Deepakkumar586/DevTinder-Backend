@@ -459,6 +459,7 @@ exports.Contactus = async (req, res) => {
 
   }
   catch (err) {
+    console.error("FULL ERROR:", err);
     return res.status(500).json({
       message: "Error occurred during contact us process",
       error: err.message
